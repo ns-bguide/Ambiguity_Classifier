@@ -71,7 +71,7 @@ print(proper)     # ['London', 'AI']
 * Frequency weighting: `0.85 * (zipf + -4.5)`
 * Length deviation: subtract `0.03 * (len(word) - 6)`
 * Common threshold: ≥ 0.1 → *likely ambiguous*; ≤ -80 → *likely non-ambiguous*.
-* Suffix bonus currently set to zero (placeholder for future tweaks).
+
 
 ## Data provenance
 

@@ -1,32 +1,14 @@
-import os
 import typing as _t
 from dataclasses import dataclass
 from importlib import resources
 
-_USE_WORDFREQ = os.getenv("AMBICLASS_USE_WORDFREQ", "").lower() in {"1", "true", "yes", "on"}
-
-if _USE_WORDFREQ:
-    try:  # pragma: no cover - optional dependency
-        from wordfreq import zipf_frequency  # type: ignore
-
-        _WORDFREQ_AVAILABLE = True
-    except Exception:  # pragma: no cover
-        _WORDFREQ_AVAILABLE = False
-else:
-    _WORDFREQ_AVAILABLE = False
-
 _COMMON_MEMBERSHIP = 5.0
 _PROPER_MEMBERSHIP = -4.0
-_ZIPF_MULTIPLIER = 0.9
-_ZIPF_BIAS = -4.0
 _WORD_LENGTH_NEUTRAL = 7
 _WORD_LENGTH_MULTIPLIER = 0.04
-_HAS_COMMON_SUFFIX = 0.0
-_CAPITALIZATION_PENALTY = 0.0
-_CAPITALIZATION_ZIPF_LOW = 2.0
-_CAPITALIZATION_ZIPF_RANGE = 4.0
-_COMMON_THRESHOLD = 0.05
+_COMMON_THRESHOLD = 3.65
 _NOT_THRESHOLD = -40.0
+
 
 @dataclass(frozen=True)
 class ClassificationResult:
@@ -80,12 +62,6 @@ def _load_proper_lower() -> set[str]:
     return _proper_lower_cache
 
 
-def _zipf(word: str) -> float:
-    if not _WORDFREQ_AVAILABLE:
-        return 0.0
-    return zipf_frequency(word, "en")
-
-
 def classify_word(word: str) -> ClassificationResult:
     word = word.strip()
     if not word:
@@ -105,26 +81,14 @@ def classify_word(word: str) -> ClassificationResult:
     elif propers_lower and word.islower() and lower in propers_lower:
         score += _PROPER_MEMBERSHIP
 
-    zipf = _zipf(lower)
-    score += _ZIPF_MULTIPLIER * (zipf + _ZIPF_BIAS)
-
     length_delta = len(word) - _WORD_LENGTH_NEUTRAL
     score -= _WORD_LENGTH_MULTIPLIER * length_delta
-
-    if _CAPITALIZATION_PENALTY and word and word[0].isupper():
-        freq_factor = 0.0
-        if _WORDFREQ_AVAILABLE:
-            freq_factor = (zipf - _CAPITALIZATION_ZIPF_LOW) / _CAPITALIZATION_ZIPF_RANGE
-            freq_factor = max(0.0, min(1.0, freq_factor))
-        score -= _CAPITALIZATION_PENALTY * freq_factor
-
 
     label = "likely ambiguous" if score >= _COMMON_THRESHOLD else "likely non-ambiguous"
     if score <= _NOT_THRESHOLD:
         label = "likely non-ambiguous"
 
-    reason_bits = [f"zipf={zipf:.2f}" if _WORDFREQ_AVAILABLE else "zipf=n/a", f"lenΔ={length_delta}"]
-    reason = ";".join(reason_bits)
+    reason = f"lenΔ={length_delta}"
     return ClassificationResult(word, label, score, reason)
 
 
