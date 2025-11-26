@@ -1,0 +1,19 @@
+[project]
+name = "ambiguity-simple"
+version = "0.1.0"
+description = "Lightweight noun ambiguity classifier with a bundled wordlist."
+readme = "README.md"
+authors = [{ name = "ns-bguide" }]
+requires-python = ">=3.9"
+dependencies = [
+  "wordfreq>=3.0.0"
+]
+
+[project.scripts]
+ambiguity-simple = "ambiguity_simple.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"ambiguity_simple" = ["data/common.txt"]
